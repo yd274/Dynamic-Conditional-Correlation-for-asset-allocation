@@ -159,7 +159,7 @@ class DCC(GenericLikelihoodModel):
         return log_pdf
 
     def forecast(self, params, step=1):
-        A0 = self.L0 @ self.L0
+        A0 = self.L0 @ self.L0.T
         A = params[0]
         B = params[1]
         if self.err_dist == "StudentsT":
@@ -173,12 +173,12 @@ class DCC(GenericLikelihoodModel):
         # Get the conditional variance and mean forecast from GARCH
         for i in range(self._n_dim):
             arch_forecast.append(vol_res[i].forecast(horizon=step, reindex=False))
-            vol_forecast[:, i] = np.sqrt(arch_forecast[i].residual_vairance)
+            vol_forecast[:, i] = np.sqrt(arch_forecast[i].residual_variance)
             mean_forecast[:, i] = arch_forecast[i].mean
 
         temp_res = self.conditional_cov(params)
         last_values = temp_res["Std residual"][-1]
-        Q0 = temp_res(params)["Q"]
+        Q0 = temp_res["Q"][-1]
         temp = np.reshape(np.array(last_values), (self._n_dim, 1))
         temp = temp @ temp.T
         Corr_forecast = np.zeros((step, self._n_dim, self._n_dim))
